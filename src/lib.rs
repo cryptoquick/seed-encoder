@@ -99,8 +99,13 @@ pub fn detect(input: &str) -> Plate {
 pub enum Error {
     /// Word not found in BIP-39 wordlist when encoding words
     EncodeWordNotFound,
+    /// Number not between 1-2048, which is the size of the BIP-39 wordlist
+    DecodeNumNotFound,
+    /// First 4 letters not found in BIP-39 wordlist when encoding words
+    DecodeAlphaNotFound,
 }
 
+/// Take words from word list and return numbers of those words
 pub fn encode_num(words: &str) -> Result<String, Error> {
     let mut nums = vec![];
 
@@ -117,6 +122,7 @@ pub fn encode_num(words: &str) -> Result<String, Error> {
     Ok(nums.join(" "))
 }
 
+/// Take words from word list and return first 4 letters of those words
 pub fn encode_alpha(words: &str) -> Result<String, Error> {
     let mut alphas = vec![];
 
@@ -133,11 +139,49 @@ pub fn encode_alpha(words: &str) -> Result<String, Error> {
     Ok(alphas.join(" "))
 }
 
+/// Take number of word from word list and return full word
+pub fn decode_num(nums: &str) -> Result<String, Error> {
+    let mut words = vec![];
+
+    for num in nums.split_ascii_whitespace() {
+        let result = NUM_ENGLISH.get(num);
+
+        if let Some(word) = result {
+            words.push(num.to_string());
+        } else {
+            return Err(Error::DecodeNumNotFound);
+        }
+    }
+
+    Ok(words.join(" "))
+}
+
+/// Take first 4 letters from word and return full word
+pub fn decode_alpha(alphas: &str) -> Result<String, Error> {
+    let mut words = vec![];
+
+    for alpha in alphas.split_ascii_whitespace() {
+        let result = ALPHA_ENGLISH.get(alpha);
+
+        if let Some(word) = result {
+            words.push(word.to_string());
+        } else {
+            return Err(Error::DecodeAlphaNotFound);
+        }
+    }
+
+    Ok(words.join(" "))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     const WORDS: &str = "evidence gate beef bright sample lounge flower culture strategy begin thought thumb start ask river olive joy pause purchase absorb mad jacket error elevator";
+
+    const ALPHAS: &str = "evid gate beef brig samp loun flow cult stra begi thou thum star ask rive oliv joy paus purc abso mad jack erro elev";
+
+    const NUMS: &str = "623 771 161 225 1529 1059 717 429 1719 163 1800 1804 1702 107 1495 1234 965 1292 1394 7 1070 953 615 576";
 
     #[test]
     fn encodes_nums() {
@@ -149,5 +193,17 @@ mod tests {
     fn encodes_alphas() {
         let result = encode_alpha(WORDS).unwrap();
         assert_eq!(result, "evid gate beef brig samp loun flow cult stra begi thou thum star ask rive oliv joy paus purc abso mad jack erro elev");
+    }
+
+    #[test]
+    fn decodes_nums() {
+        let result = decode_num(NUMS).unwrap();
+        assert_eq!(result, "evidence gate beef bright sample lounge flower culture strategy begin thought thumb start ask river olive joy pause purchase absorb mad jacket error elevator");
+    }
+
+    #[test]
+    fn decodes_alphas() {
+        let result = decode_alpha(ALPHAS).unwrap();
+        assert_eq!(result, "evidence gate beef bright sample lounge flower culture strategy begin thought thumb start ask river olive joy pause purchase absorb mad jacket error elevator");
     }
 }
