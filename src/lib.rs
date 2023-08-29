@@ -1,7 +1,8 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, num::ParseIntError};
 
 use once_cell::sync::Lazy;
 use substring::Substring;
+use thiserror::Error;
 
 const ENGLISH: &str = include_str!("../words/english.txt");
 
@@ -95,14 +96,16 @@ pub fn detect(input: &str) -> Plate {
     }
 }
 
-#[derive(Debug)]
+#[derive(Error, Debug)]
 pub enum Error {
-    /// Word not found in BIP-39 wordlist when encoding words
+    #[error("Word not found in BIP-39 wordlist when encoding words")]
     EncodeWordNotFound,
-    /// Number not between 1-2048, which is the size of the BIP-39 wordlist
+    #[error("Number not between 1-2048, which is the size of the BIP-39 wordlist")]
     DecodeNumNotFound,
-    /// First 4 letters not found in BIP-39 wordlist when encoding words
+    #[error("First 4 letters not found in BIP-39 wordlist when encoding words")]
     DecodeAlphaNotFound,
+    #[error(transparent)]
+    ParseIntError(#[from] ParseIntError),
 }
 
 /// Take words from word list and return numbers of those words
@@ -144,10 +147,10 @@ pub fn decode_num(nums: &str) -> Result<String, Error> {
     let mut words = vec![];
 
     for num in nums.split_ascii_whitespace() {
-        let result = NUM_ENGLISH.get(num);
+        let result = NUM_ENGLISH.get(&num.parse::<u16>()?);
 
         if let Some(word) = result {
-            words.push(num.to_string());
+            words.push(word.to_owned());
         } else {
             return Err(Error::DecodeNumNotFound);
         }

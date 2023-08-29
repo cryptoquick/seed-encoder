@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 once_cell = "1.18.0"
 substring = "1.4.5"
+thiserror = "1.0"
