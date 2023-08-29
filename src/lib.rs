@@ -54,24 +54,15 @@ pub enum Plate {
 
 pub fn detect(input: &str) -> Plate {
     let words = input.split(' ');
-
+    
     if !matches!(words.clone().count(), 12 | 18 | 24) {
         return Plate::Unknown;
     }
-
+    
     let mut alphas = 0;
     let mut nums = 0;
-
+    
     for word in words.clone() {
-        if word.len() == 4 {
-            alphas += 1;
-        } else {
-            break;
-        }
-    }
-
-    if !matches!(alphas, 12 | 18 | 24) {
-        for word in words {
             match word.parse::<u16>() {
                 Ok(result) => {
                     if result <= 2048 {
@@ -85,6 +76,15 @@ pub fn detect(input: &str) -> Plate {
                 }
             };
         }
+
+    if !matches!(nums, 12 | 18 | 24) {
+        for word in words.clone() {
+            if word.len() <= 4 {
+                alphas += 1;
+            } else {
+                break;
+            }
+        } 
     }
 
     if matches!(alphas, 12 | 18 | 24) {
@@ -176,6 +176,15 @@ pub fn decode_alpha(alphas: &str) -> Result<String, Error> {
     Ok(words.join(" "))
 }
 
+/// Automatic decode method
+pub fn decode(input: &str) -> Result<String, Error> {
+    match detect(input) {
+        Plate::Alpha => decode_alpha(input),
+        Plate::Num => decode_num(input),
+        Plate::Unknown => Ok(input.to_owned()),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -207,6 +216,16 @@ mod tests {
     #[test]
     fn decodes_alphas() {
         let result = decode_alpha(ALPHAS).unwrap();
+        assert_eq!(result, "evidence gate beef bright sample lounge flower culture strategy begin thought thumb start ask river olive joy pause purchase absorb mad jacket error elevator");
+    }
+
+    #[test]
+    fn decodes() {
+        let result = decode(ALPHAS).unwrap();
+        assert_eq!(result, "evidence gate beef bright sample lounge flower culture strategy begin thought thumb start ask river olive joy pause purchase absorb mad jacket error elevator");
+        let result = decode(NUMS).unwrap();
+        assert_eq!(result, "evidence gate beef bright sample lounge flower culture strategy begin thought thumb start ask river olive joy pause purchase absorb mad jacket error elevator");
+        let result = decode(WORDS).unwrap();
         assert_eq!(result, "evidence gate beef bright sample lounge flower culture strategy begin thought thumb start ask river olive joy pause purchase absorb mad jacket error elevator");
     }
 }
